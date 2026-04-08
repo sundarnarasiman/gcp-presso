@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Reinforcement Motion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/google.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad: true, theme: 'default'});</script>
+    <style>
+        .reveal { font-family: 'Open Sans', Arial, sans-serif; }
+        .reveal h1, .reveal h2, .reveal h3 { color: #4285F4; text-transform: none; font-weight: 600; }
+        .block-red { color: #ea4335; font-weight: bold; }
+        .gcp-box { border: 2px solid #4285F4; border-radius: 8px; padding: 20px; background-color: #f8f9fa; }
+        .reveal ul { font-size: 0.8em; }
+        .reveal li { margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1 -->
+            <section data-background-color="#ffffff">
+                <h2>Path to the $100k Run-Rate</h2>
+                <h4>Delivery Reinforcement & Acceleration Plan</h4>
+                <p style="font-size: 0.6em; color: #666; margin-top: 30px;">Goal: Transitioning stalled 2PB pipeline into active production.</p>
+            </section>
+
+            <!-- Slide 2: Executive Summary -->
+            <section>
+                <h2>Executive Summary</h2>
+                <ul style="font-size: 0.7em; text-align: left; line-height: 1.6;">
+                    <li><strong style="color:#4285F4;">Objective:</strong> Resume the stalled 2PB data migration to realize the anticipated $100k/month consumption target.</li>
+                    <li><strong class="block-red">The Interruption:</strong> Revenue ramp is blocked at $5k/month due to network throughput throttling, pending manual DBA security reviews, and localized compute stockouts.</li>
+                    <li><strong style="color:#34A853;">The Resolution:</strong> A 21-day execution plan leveraging native GCP architecture (VPC Service Controls, ECMP Routing, Regional Clusters) to bypass legacy policy blockers and physical resource limits.</li>
+                    <li><strong>The Ask:</strong> Executive sponsor alignment to authorize automated security perimeters (VPC-SC) ensuring we clear the regulatory gate immediately.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 3: The Blockers -->
+            <section>
+                <h2>Current State vs Target State</h2>
+                <div style="display: flex; gap: 20px;">
+                    <div class="gcp-box" style="flex: 1;">
+                        <h4 style="color:#000; font-size:0.9em;">Current Velocity</h4>
+                        <p style="font-size: 1.5em; color: #ea4335; font-weight: bold;">$5k / mo</p>
+                        <p style="font-size:0.6em;">Stalled by Network Throttling, Missing Security clearings, and Regional compute stockouts.</p>
+                    </div>
+                    <div class="gcp-box" style="flex: 1; border-color:#34a853;">
+                        <h4 style="color:#000; font-size:0.9em;">Target Revenue Ramp</h4>
+                        <p style="font-size: 1.5em; color: #34a853; font-weight: bold;">$100k / mo</p>
+                        <p style="font-size:0.6em;">Unlock the 2PB workload, yielding a $750k annual run-rate projection.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: Impediments -->
+            <section>
+                <h2>Impediments to Acceleration</h2>
+                <ul style="font-size: 0.7em; text-align: left; line-height: 1.6;">
+                    <li><strong>2 PB of Raw Data</strong> – massive ingestion volume.</li>
+                    <li><strong class="block-red">Throttled Interconnect connection</strong> – bandwidth ceiling.</li>
+                    <li><strong class="block-red">No centralized security on Landing Zone</strong> – lack of perimeter controls.</li>
+                    <li><strong>Security review pending</strong> – compliance gate.</li>
+                    <li><strong class="block-red">DBA team unavailable</strong> – manual data‑access approvals stalled.</li>
+                    <li><strong>Latency in the data pipeline & processing</strong> – inefficient ETL.</li>
+                    <li><strong class="block-red">Compute resources unavailable in target region</strong> – quota/stock‑out.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 5: Hypotheses -->
+            <section>
+                <h2>Investigation Hypotheses</h2>
+                <p style="font-size: 0.7em; text-align: left; margin-bottom: 20px;">Based on the initial deployment symptom report, my gut assumptions are:</p>
+                <ul>
+                    <li><strong style="color:#4285F4;">Hypothesis 1 (Networking):</strong> The Interconnect throttling isn't a physical limit, but a misconfigured network QoS policy or under-provisioned VLAN attachments for the BGP session.</li>
+                    <li><strong style="color:#4285F4;">Hypothesis 2 (Security/Data Isolation):</strong> The pending security review is stalled because the DBA is absent. By wrapping Cloud Storage in VPC Service Controls (VPC-SC), we can automatically satisfy InfoSec's data exfiltration concerns without manual DBA review.</li>
+                    <li><strong style="color:#4285F4;">Hypothesis 3 (Compute/Pipeline):</strong> The Dataflow latency bug is an inefficient data shuffle phase, and the GKE compute issue is caused by strict zonal pinning preventing access to the broader regional compute pool capacity.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 6: Unblocking Strategies (Data & Network) -->
+            <section>
+                <h2>Unblocking Strategies (Data & Network)</h2>
+                <ul style="font-size: 0.7em; text-align: left; line-height: 1.6;">
+                    <li><strong style="color:#4285F4;">2PB Ingestion & Throttling:</strong> Implement <strong>ECMP routing</strong> across multiple VLAN attachments to aggregate bandwidth natively. <i>Fallback:</i> Dispatch multiple <strong>Google Transfer Appliances</strong> for offline bulk loading if carrier QoS limits persist.</li>
+                    <li><strong style="color:#4285F4;">Pipeline Latency:</strong> Enable <strong>Dataflow Streaming Engine / Prime</strong> to offload the pipeline shuffle phase. This instantaneously eliminates worker node memory/CPU bottlenecks causing the inefficiency.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 7: Unblocking Strategies (Security & Compute) -->
+            <section>
+                <h2>Unblocking Strategies (Security & Compute)</h2>
+                <ul style="font-size: 0.7em; text-align: left; line-height: 1.6;">
+                    <li><strong style="color:#34A853;">Security Pending & Absent DBA:</strong> Wrap Cloud Storage in a <strong>VPC Service Controls (VPC-SC)</strong> perimeter using <strong>CMEK</strong> encryption. This mathematically guarantees data isolation, proactively satisfying InfoSec and bypassing the manual DBA gate entirely.</li>
+                    <li><strong style="color:#34A853;">Regional Compute Stockout:</strong> Pivot pinned single-zone GKE clusters to <strong>Regional Clusters</strong>. This spreads node pools dynamically across zones <i>a, b,</i> and <i>c</i>, capturing fragmented compute capacity to securely clear the localized stockout.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 8: Stakeholder Mapping -->
+            <section>
+                <h2>Stakeholder & Ecosystem Map</h2>
+                <p style="font-size: 0.7em; text-align: left;">To unblock this workload, we need to bypass siloed communication by bringing these critical players into a single war room:</p>
+                <table style="font-size: 0.6em; width: 100%;">
+                    <tr style="background-color: #e8f0fe;">
+                        <th>Entity</th>
+                        <th>Required Role</th>
+                        <th>Outcome Required</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Customer</strong></td>
+                        <td>VP of Ops (Biz) & Head of Cloud Delivery (Tech)</td>
+                        <td>Final sign-off on remediation budget and security waivers.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Customer</strong></td>
+                        <td>InfoSec Lead</td>
+                        <td>Validate VPC-SC perimeter solves their isolation rule.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>System Integrator (SI)</strong></td>
+                        <td>Lead Data Engineer</td>
+                        <td>Implement the Dataflow optimizations we mandate.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Google Cloud</strong></td>
+                        <td>Customer Eng (Me) & Networking Specialist</td>
+                        <td>Execute interconnect tests & push compute quota limits.</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 9: Discovery Framework -->
+            <section>
+                <h2>The Discovery Framework</h2>
+                <p style="font-size: 0.6em; text-align: left;">Moving past symptom reporting to concrete root causes:</p>
+                <ul>
+                    <li><strong>Network Root Cause:</strong> Run <code>iPerf</code> telemetry through the Interconnect using Network Intelligence Center to monitor packet drops and TCP windowing.</li>
+                    <li><strong>Security Root Cause:</strong> Cross-reference the InfoSec compliance checklist with GCP native controls. Confirm if VPC-SC directly addresses the absent DBA gap.</li>
+                    <li><strong>Pipeline Root Cause:</strong> Enable <i>Dataflow Job Execution Details</i> UI to chart "Wall Time vs CPU Time." Identify if workers are waiting on network (I/O bound) or stuck in bad code loops (CPU bound).</li>
+                </ul>
+            </section>
+
+            <!-- Slide 10: Execution Plan -->
+            <section>
+                <h2>Execution Plan & Governance</h2>
+                
+                <!-- Mermaid Gantt Chart -->
+                <div class="mermaid" style="font-size: 0.45em;">
+                    gantt
+                        title Sequence to Resume $100k/mo Delivery
+                        dateFormat  YYYY-MM-DD
+                        
+                        section Discovery & Mitigation
+                        Execute Technical Discovery Framework  :active, n1, 2026-04-01, 3d
+                        Apply VPC-SC & DBA Bypass Strategy     :         m1, after n1, 3d
+                        Implement Dataflow Prime Shuffle Fix   :         m2, after n1, 4d
+                        
+                        section Resume Ramping
+                        Resume 2PB ETL Workload                :crit,    r1, after m2, 3d
+                        Validate Consumption Velocity ($50k/mo) :         r2, after r1, 7d
+                </div>
+                
+                <p style="font-size: 0.55em; text-align:left; margin-top: 15px;"><strong>Governance:</strong> Outcome CE leads daily 15-min technical unblocking standups on the immediate blockers.</p>
+            </section>
+            
+            <!-- Slide 11: Tracking Plan -->
+            <section>
+                <h2>Post-Resolution Tracking Plan</h2>
+                <p style="font-size: 0.65em; text-align: left;">Sustaining the $100k/month run-rate requires strict telemetry and governance across time horizons:</p>
+                <ul style="font-size: 0.65em; text-align: left; line-height: 1.6;">
+                    <li><strong style="color:#4285F4;">Weekly (Operational Velocity):</strong> Export Cloud Billing to BigQuery to track actual daily spend vs the $100k target. Deliver Velocity Burn-down reports to the VP of Ops. Monitor pipeline error-budgets against a negotiated 99.9% SLO.</li>
+                    <li><strong style="color:#34A853;">Monthly (Business Realization):</strong> Executive Business Review (EBR). Evaluate trailing 30-day consumption ($100k achieved) vs original business case ($750k). Lock in Compute Engine Capacity Reservations based on sustained throughput needs.</li>
+                    <li><strong style="color:#FABB05;">Quarterly (Strategic Pivot):</strong> Evaluate total 2PB ingestion success. Transition from "Data Migration" to "Data Activation" by piloting Vertex AI on the BigQuery foundation to generate net-new business value.</li>
+                </ul>
+            </section>
+
+            <!-- Slide 12 -->
+            <section>
+                <h2>Questions & Next Steps</h2>
+                <ul>
+                    <li><strong>VP of Ops:</strong> Does this sequence and timeline give you confidence in hitting the $750k annual run-rate without further delays?</li>
+                    <li><strong>Head of Cloud Delivery:</strong> Are you comfortable signing off on the VPC Service Controls perimeter in place of the delayed manual DBA review?</li>
+                </ul>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>Reveal.initialize({ hash: true, slideNumber: 'c/t', transition: 'slide' });</script>
+</body>
+</html>

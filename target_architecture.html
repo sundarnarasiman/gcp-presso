@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Solution Architecture</title>
+    <!-- Mermaid.js for Diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+    <style>
+        body { font-family: 'Open Sans', Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px;}
+        h2 { color: #4285F4; }
+        .mermaid-container { background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <h2>Outcome CE: Target Solution Architecture</h2>
+    <p>This diagram shows the "Green" unblocked state after our technical execution plan is applied.</p>
+
+    <div class="mermaid-container">
+        <div class="mermaid" style="font-size: 1.2em;">
+            graph TD
+                classDef greenBox fill:#e6f4ea,stroke:#34a853,stroke-width:2px,color:#137333
+                classDef blueBox fill:#e8f0fe,stroke:#4285f4,stroke-width:2px,color:#174ea6
+                classDef greyBox fill:#f1f3f4,stroke:#dadce0,stroke-width:1px
+            
+                subgraph On-Prem Source
+                    A[Legacy Database - 2 PB]
+                end
+                
+                A --> B[Dedicated Interconnect]
+                B -.-> B1(Resolved: ECMP Routing to Bypass Throttling):::greenBox
+                
+                subgraph GCP Data Isolation Zone
+                    B --> C[Cloud Storage]
+                    C -.-> C1(Resolved: VPC-SC / CMEK Bypasses DBA Need):::greenBox
+                end
+                
+                subgraph GCP Data Pipeline
+                    C --> D[Dataflow ETL Engine]
+                    D -.-> D1(Resolved: Streaming Engine Handles Shuffle):::greenBox
+                    C --> E[Regional GKE Compute Pool]
+                    E -.-> E1(Resolved: Multi-Zone Spreading Defeats Quota Limit):::greenBox
+                end
+                
+                subgraph Data Warehouse
+                    D --> F[BigQuery]
+                    E --> F
+                    F -.-> F1(Achieved: 2PB Flowing - $100k Monthly Target):::blueBox
+                end
+        </div>
+    </div>
+    <br><br>
+    <p><strong>To save as PNG:</strong> Go to <a href="https://mermaid.live/" target="_blank">Mermaid Live Editor</a>, paste the code, and click "Save as PNG".</p>
+</body>
+</html>
